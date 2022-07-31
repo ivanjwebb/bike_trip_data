@@ -1,0 +1,212 @@
+library(tidyverse)
+```{r}
+library(ggplot2) 
+library(tidyverse)
+library(lubridate)
+```
+
+
+```{r}
+
+```
+
+```{r}
+setwd("C:/Users/Ivan J Webb/Documents/trip_data")
+trip_data <- read_csv("202206-divvy-tripdata.csv")
+
+
+```
+```{r}
+colnames(trip_data)
+
+```
+
+```{r}
+str(trip_data)
+
+```
+```{r}
+trip_data <-  mutate(trip_data, ride_id = as.character(ride_id)
+                   ,rideable_type = as.character(rideable_type)) 
+
+
+```
+```{r}
+trip_data <-  mutate(trip_data, ride_id = as.character(ride_id)
+                   ,rideable_type = as.character(rideable_type)) 
+
+
+```
+```{r}
+trip_data <- trip_data %>%  
+  select(-c(start_lat, start_lng, end_lat, end_lng))
+
+```
+```{r}
+colnames(trip_data)
+```
+
+```{r}
+nrow(trip_data)
+```
+
+```{r}
+dim(trip_data)
+```
+
+```{r}
+head(trip_data)
+```
+
+```{r}
+str(trip_data)
+```
+
+```{r}
+summary(trip_data)
+```
+```{r}
+trip_data <-  trip_data %>% 
+  mutate(member_casual = recode(member_casual
+                           ,"Subscriber" = "member"
+                           ,"Customer" = "casual"))
+
+```
+
+```{r}
+table(trip_data$member_casual)
+
+```
+
+```{r}
+trip_data$date <- as.Date(trip_data$started_at) #The default format is yyyy-mm-dd
+```
+
+```{r}
+trip_data$month <- format(as.Date(trip_data$date), "%m")
+
+```
+
+```{r}
+trip_data$day <- format(as.Date(trip_data$date), "%d")
+
+```
+
+```{r}
+trip_data$year <- format(as.Date(trip_data$date), "%Y")
+```
+
+```{r}
+
+trip_data$day_of_week <- format(as.Date(trip_data$date), "%A")
+```
+
+```{r}
+trip_data$ride_length <- difftime(trip_data$ended_at,trip_data$started_at)
+
+```
+
+```{r}
+str(trip_data)
+```
+```{r}
+is.factor(trip_data$ride_length)
+
+```
+
+```{r}
+trip_data$ride_length <- as.numeric(as.character(trip_data$ride_length))
+is.numeric(trip_data$ride_length)
+
+```
+```{r}
+trip_data_v2 <- trip_data[!(trip_data$start_station_name == "HQ QR" | trip_data$ride_length<0),]
+
+```
+
+```{r}
+mean(trip_data_v2$ride_length, na.rm=TRUE)
+```
+
+```{r}
+median(trip_data_v2$ride_length, na.rm=TRUE)
+```
+
+```{r}
+max(trip_data_v2$ride_length, na.rm=TRUE)
+```
+
+```{r}
+min(trip_data_v2$ride_length, na.rm=TRUE)
+```
+
+```{r}
+summary(trip_data_v2$ride_length)
+```
+
+```{r}
+aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual, FUN = mean)
+```
+
+```{r}
+aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual, FUN = median)
+```
+
+```{r}
+aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual, FUN = max)
+```
+
+```{r}
+aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual, FUN = min)
+```
+
+```{r}
+aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual + trip_data_v2$day_of_week, FUN = mean)
+
+```
+```{r}
+trip_data_v2$day_of_week <- ordered(trip_data_v2$day_of_week, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+
+```
+
+```{r}
+aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual + trip_data_v2$day_of_week, FUN = mean)
+
+```
+```{r}
+trip_data_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>%  #creates weekday field using wday()
+  group_by(member_casual, weekday) %>%  #groups by usertype and weekday
+  summarise(number_of_rides = n()	
+            ,average_duration = mean(ride_length)) %>% 		# calculates the average duration
+  arrange(member_casual, weekday)		
+```
+```{r}
+trip_data_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>% 
+  group_by(member_casual, weekday) %>% 
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_length)) %>% 
+  arrange(member_casual, weekday)  %>% 
+  ggplot(aes(x = weekday, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge")
+
+```
+```{r}
+trip_data_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>% 
+  group_by(member_casual, weekday) %>% 
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_length)) %>% 
+  arrange(member_casual, weekday)  %>% 
+  ggplot(aes(x = weekday, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge")
+
+```
+```{r}
+counts <- aggregate(trip_data_v2$ride_length ~ trip_data_v2$member_casual + trip_data_v2$day_of_week, FUN = mean)
+write.csv(counts, file = '~/Desktop/Divvy_Exercise/avg_ride_length.csv')
+
+```
+
